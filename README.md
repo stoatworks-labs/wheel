@@ -112,6 +112,7 @@ to a number this machine printed.
 | Bit planes | 8 planes are the input **bitwise**; 4 planes are the 4-bit input bitwise; under motion 4 and 8 differ in 2.4 M bytes |
 | Track eye | a one-cell-per-frame scroll reads **10.02** px/frame at 320×180 (cell 10) and 40.09 at 720p (cell 40); a still picture reads 0.01 and 0.04 |
 | A resize mid-run | the still eye still returns the input bitwise on the first new frame; the Track eye starts from zero; no crash |
+| `--pipe` | a still eye through the pipe is the input **bitwise**; a cue acts from its frame and not before; a Fire cue saccades; a partial frame at EOF is dropped; an unknown name is refused |
 | Negative controls | **12 of 12 reject**: a DMD that interpolates, segment times 15% and 5% out, taps summing past one, a W share 15% out, an offset a pixel out, an unprimed detector, a Saccade Time 30% out, four planes judged as eight, two cells judged as one |
 | Mutation | `p + off` → `p − off` in the shipped integrate shader: `--separation` fails 14 of 18; `--still` and `--energy` correctly do not |
 | No dead controls | all **23** swept parameters measurably change the picture |
@@ -134,8 +135,7 @@ hand-rolled bilinear taps; at 4K under pursuit that is more than a 60 fps
 frame. RGB at 2x is six.
 
 **Not done:** never run in Resolume; no OpenFX port and no browser demo (not
-required at 0.1.0); no `--pipe` filter mode; no user guide, so the About
-block has three buttons rather than four; no factory presets; the audio
+required at 0.1.0); no factory presets; the audio
 path has only ever seen the harness's synthetic spectra, and nobody has
 measured what Resolume's 64 FFT bins are; the Track eye is a global
 estimate that follows whatever most of the picture is doing, not the object
@@ -187,6 +187,29 @@ tools/verify.sh                         # all of it, from a fresh universal buil
 `--set "Name=value"` sets any control by its display name, repeatably;
 `--tone` pushes a synthetic click train into the audio input and `--fire N`
 presses Fire on frame N.
+
+To film a clip through the real plugin, `--pipe` takes the fleet's raw
+format — RGBA frames on stdin, RGBA frames on stdout — on a synthetic clock
+of `--fps` frames a second, driven by an optional cue sheet:
+
+```bash
+ffmpeg -i in.mov -f rawvideo -pix_fmt rgba - \
+  | ./build/whtest --pipe --size 1920x1080 --fps 30 --script cues.txt \
+  | ffmpeg -f rawvideo -pix_fmt rgba -s 1920x1080 -r 30 -i - out.mov
+```
+
+```
+# frame  Parameter Name  value     (host units: 0..1 sliders, option values)
+0    Pursuit Speed   0.375         # 12 px a frame
+30   Eye Mode        1             # Pursuit from frame 30
+90   Eye Mode        0             # Still again
+120  Fire            1             # one saccade by hand
+121  Fire            0
+```
+
+Sliders and Bit Depth interpolate between their keys; options, Bit Planes
+and Fire step. An unknown name refuses the run. The Audio input is silence
+(or `--tone`), so Saccade mode only saccades on a Fire cue.
 
 <!-- attributions:start -->
 This project is built on other people's work — see [ATTRIBUTIONS.md](ATTRIBUTIONS.md).

@@ -19,6 +19,16 @@ integrate shader.
 - Set a control: `--set "Eye Mode=1" --set "Pursuit Speed=0.25"` (repeatable, by display name;
   options and Bit Depth take their element value, not a fraction)
 - Feed the audio input a click train: `--tone`; press Fire on frame N: `--fire N`
+- Film a clip through it: `ffmpeg -i in.mov -f rawvideo -pix_fmt rgba - | ./build/whtest --pipe --size 1920x1080 --fps 30 [--script cues.txt] | ffmpeg -f rawvideo -pix_fmt rgba -s 1920x1080 -r 30 -i - out.mov`
+  — raw RGBA frames on stdin, raw RGBA frames on stdout, the fleet's format. The clock is
+  synthetic: milliseconds, as Resolume sends them, at `--fps` (default 60), so the wheel, a
+  pursuit and a saccade move per frame of the take. A `--script` line is
+  `frame  Parameter Name  value` in host units (0..1 sliders, option element values, Bit Depth
+  1..8, Fire 1 then 0); sliders and Bit Depth interpolate between keys and hold their first key
+  before it (as pbtest); options, Bit Planes and Fire step, and are left alone before their
+  first key. A value reaches the plugin only when it changes. An unknown name, `Audio` or an
+  About line refuses the run. Audio is silence unless `--tone`. **Film from the first frame**:
+  the Track eye and a saccade carry state, so there is no seeking.
 
 ## Verify
 - Everything, from a fresh universal build: `tools/verify.sh` (~1 min)
@@ -32,6 +42,7 @@ integrate shader.
 - The Track eye reads one cell a frame as one cell a frame: `./build/whtest --track`
 - A resize mid-run: `./build/whtest --resize`
 - No parameter name over 16 characters: `./build/whtest --names`
+- The pipe round-trips (still eye bitwise, cues from their frame, Fire from a cue): `tools/verify.sh`'s pipe step
 - Every check can fail: `./build/whtest --negative`
 - All of those in one run: `./build/whtest --all`
 - No dead controls: `python3 tools/sweep.py`
@@ -81,8 +92,7 @@ one texel — never fitted to a number this Mac printed. See AGENTS.md.
 ## Not done yet
 - **Never loaded into Resolume**, on any platform. Everything here is the
   offline harness against the real plugin class.
-- No OpenFX port, no browser demo, no `--pipe` filter mode, no user guide,
-  no factory presets, no release.
+- No OpenFX port, no browser demo, no user guide, no factory presets, no release.
 - `StoatworksAbout.h` and `ATTRIBUTIONS.md` are provisional hand copies;
   CI has never run (no remote).
 - The audio path has only seen the harness's synthetic spectra.

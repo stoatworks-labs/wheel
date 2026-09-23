@@ -45,6 +45,10 @@
 #                 share, an offset a pixel out, an unprimed detector, a wrong
 #                 Saccade Time, four planes judged as eight, two cells judged
 #                 as one.
+#   --pipe        the fleet's filming format: a still eye through the pipe
+#                 is the input bitwise, a cue acts from its frame and not
+#                 before, Fire fires from a cue, a partial frame is dropped,
+#                 an unknown name is refused.
 #   sweep.py      that no control is silently dead.
 #   registration  that the bundle contains a plugin at all -- a file-scope
 #                 CFFGLPluginInfo nothing names, which a linker may drop while
@@ -185,6 +189,62 @@ else
 	printf '   *** dead controls, see /tmp/wheel-sweep.txt\n'
 	tail -6 /tmp/wheel-sweep.txt
 	fail "tools/sweep.py reports a dead control"
+fi
+
+#---------------------------------------------------------------------------
+# --pipe, the way a filming script uses it: raw RGBA in, raw RGBA out. A
+# still eye through the pipe is the input bitwise (the --still claim, now
+# through the pipe's own flip and clock); a cue changes the picture from
+# its frame and not before; Fire fires from a cue; a partial frame at EOF
+# is dropped; an unknown name is refused before a byte is written.
+#---------------------------------------------------------------------------
+step "pipe: raw frames in, raw frames out, driven by cues"
+if python3 - "$TEST" <<'PIPE_PY'
+import random, subprocess, sys, tempfile, pathlib
+test = sys.argv[ 1 ]
+W, H, N = 64, 36, 6
+size = W * H * 4
+rng = random.Random( 7 )
+frames = [ bytes( b for _ in range( W * H ) for b in ( rng.randrange( 256 ), rng.randrange( 256 ), rng.randrange( 256 ), 255 ) ) for _ in range( N ) ]
+stream = b"".join( frames ) + frames[ 0 ][ :100 ]
+bad = 0
+
+def run( cues ):
+    with tempfile.TemporaryDirectory() as d:
+        command = [ test, "--pipe", "--size", f"{W}x{H}", "--fps", "30" ]
+        if cues is not None:
+            p = pathlib.Path( d ) / "cues.txt"
+            p.write_text( cues )
+            command += [ "--script", str( p ) ]
+        r = subprocess.run( command, input=stream, capture_output=True )
+        return r.returncode, r.stdout
+
+def same( out ):
+    return [ out[ f * size:( f + 1 ) * size ] == frames[ f ] for f in range( len( out ) // size ) ]
+
+def check( ok, what ):
+    global bad
+    print( f"   {'ok  ' if ok else 'FAIL'} {what}" )
+    bad += 0 if ok else 1
+
+code, out = run( None )
+check( code == 0 and len( out ) == N * size, f"{N} whole frames in, {N} out, partial frame dropped (got {len( out ) / size:g})" )
+check( all( same( out ) ) and len( out ) == N * size, "still eye through the pipe: output == input, bitwise" )
+
+code, out = run( "0 Pursuit Speed 0.25\n3 Eye Mode 1\n" )
+check( code == 0 and same( out ) == [ True ] * 3 + [ False ] * 3, f"'3 Eye Mode 1': frames 0-2 untouched, 3-5 fringed ({same( out )})" )
+
+code, out = run( "4 Fire 1\n5 Fire 0\n" )
+check( code == 0 and same( out )[ :5 ] == [ True ] * 4 + [ False ], f"'4 Fire 1': a saccade from frame 4 and not before ({same( out )})" )
+
+code, out = run( "0 Eye Mdoe 1\n" )
+check( code == 2 and len( out ) == 0, "an unknown name is refused, exit 2, nothing written" )
+sys.exit( 1 if bad else 0 )
+PIPE_PY
+then
+	pass "whtest --pipe"
+else
+	fail "whtest --pipe"
 fi
 
 step "bench: the render cost, for the record"

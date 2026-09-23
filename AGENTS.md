@@ -85,6 +85,7 @@ negative control gives it one and `--still` fails.
 | `source/PassBuffer.{h,cpp}`, `Clock.{h,cpp}`, `Diag.{h,cpp}` | From cadence, unchanged but for the namespace. |
 | `tools/whtest/` | The offline harness: renders, checks, negative controls, benchmarks. |
 | `tools/sweep.py` | No control is silently dead. |
+| `whtest --pipe` | The fleet's filming format: raw RGBA through the real plugin on a synthetic millisecond clock, driven by a cue sheet. `runPipe` in `tools/whtest/main.cpp`. |
 | `tools/verify.sh` | All of it, from a fresh universal build. |
 
 Three passes:
@@ -172,6 +173,15 @@ cancellation is why.
 `SubW`, `SubO` and `SubT` go through `glUniform4fv` against a hand-fetched
 location. `Set( name, a, b )` on an array would resolve to `( float, float )`
 and raise `GL_INVALID_OPERATION` where nothing can see it.
+
+### Fire fires on every send, so the pipe sends on change
+
+`SetFloatParameter( PT_FIRE, v )` sets `firePending` for any `v >= 0.5`, not
+on a rising edge: a host sends 1 on press and 0 on release, and only when it
+changes. Anything that re-applies a held value every frame — pbtest's cue
+loop does — turns one press into a saccade a frame. `runPipe` sends a cue
+only when its value changes, and verify.sh's pipe step would catch the
+other half of the trap (a Fire held at its first key from frame 0).
 
 ### A control the host alone can feed reads as dead
 
@@ -338,9 +348,14 @@ suites, all passing, every picture check at 320×180 and 1280×720.
 - **The Track eye is a global estimate.** It follows whatever most of the
   picture is doing, to a grid cell, with a texture-dependent bias from the
   parabolic refinement. It is not the object the viewer is looking at.
-- **No OpenFX port, no browser demo, no `--pipe`** (not required at 0.1.0),
-  no user guide (`guide=""`, three About buttons), no factory presets, no
-  release.
+- **No OpenFX port, no browser demo** (not required at 0.1.0), no factory
+  presets, no release.
+- **`--pipe` has filmed one test clip**, not the release video: 75 frames of
+  ffmpeg's `testsrc2` at 640×360, by eye (Still clean, Pursuit fringed, a
+  Fire cue saccading, RGBCMY brightening the greys, Three Chip's static
+  fringe, 3 bit planes banding). `verify.sh` asserts the round trip at
+  64×36; no picture measurement goes through the pipe beyond "bitwise when
+  still, different when not".
 - `StoatworksAbout.h` and `ATTRIBUTIONS.md` are provisional hand copies.
 
 ---
@@ -380,9 +395,32 @@ The brief said to decide and write it down.
   this does not.
 - **Output Gamma 1.0 skips the pow entirely** rather than trusting
   `pow( x, 1.0 ) == x`.
-- **`--pipe` was left out.** Not in the brief's required list, and the
-  harness is already large; the fleet's filming script cannot drive this
-  plugin until it is added.
+- **`--pipe` is the fleet's format, with two deliberate departures from
+  pbtest's cue semantics.** (Added for the release video, 2026-09-23.)
+  Units, the parser and the continuous controls are pbtest's exactly: the
+  value is what the host sends (0..1 sliders, an option's element value,
+  Bit Depth 1..8), sliders and Bit Depth interpolate between keys and hold
+  their first key before it. But **options, Bit Planes and Fire step** and
+  are **left alone before their first key**, and **a value reaches the
+  plugin only when it changes**. pbtest re-sends every track every frame and
+  holds the first key from frame 0, which for Wheel would make `65 Wheel
+  Type 2` an RGBCMY wheel for the whole take, make `30 Fire 1` a press on
+  frame 0, and — because Fire saccades on every value >= 0.5 it is *sent* —
+  fire a saccade on every frame a 1 is held. Re-sending only on change is
+  also what a host does. The first round trip found the first of these: a
+  still eye was not bitwise through the pipe until discrete controls
+  stopped holding their first key.
+- **`--pipe`'s clock is milliseconds, declared.** `SetTime( frame * 1000 /
+  fps )` in double, computed from the index (never accumulated), with the
+  clock's unit declared as 0.001 through `SetClockScaleForTest` — a pipe
+  renders as fast as the GPU allows, so the calibration has nothing to
+  measure. `--fps` outside 24..240 warns, because `Clock` clamps a frame to
+  1/240..1/24 s as it would in Resolume.
+- **`--pipe` feeds the Audio buffer silence** (or `--tone`'s click train),
+  and refuses a cue on `Audio` or an About line. Saccade mode in a take
+  therefore saccades only on Fire cues. Feeding a real soundtrack's spectrum
+  would need Resolume's 64 bins characterised first, and nobody has.
+- **`--script` without `--pipe` is refused** rather than ignored.
 - **The bench reports three loads**, because "the cost" of this plugin
   ranges over a factor of six depending on the wheel and the eye, and a
   single number would be either a lie or a worst case.

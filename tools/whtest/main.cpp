@@ -21,10 +21,22 @@
 		whtest --names                  no parameter name over 16 characters
 		whtest --negative               every check above can fail
 		whtest --bench                  the render cost, 720p through 4K
+		whtest --pipe                   raw frames in, raw frames out
 
 	Every check has one flag, every flag has one claim, and every claim is
 	stated in the README's Status table with the number this printed. Every
 	picture check runs at two rasters, 320x180 (what CI uses) and 1280x720.
+
+	`--pipe` takes the fleet's frame format, so one filming script drives any
+	of the plugins:
+
+		ffmpeg -i in.mov -f rawvideo -pix_fmt rgba - \
+		  | whtest --pipe --size 1920x1080 [--fps 30] [--script cues.txt] \
+		  | ffmpeg -f rawvideo -pix_fmt rgba -s 1920x1080 -r 30 -i - out.mov
+
+	Its clock is synthetic -- milliseconds, as Resolume sends them, at --fps
+	-- so the wheel, a pursuit and a saccade move per frame of the take, not
+	per wall-clock second of the render. See `runPipe`.
 */
 
 #include "Controls.h"
@@ -38,9 +50,14 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <csignal>
 #include <cstdio>
 #include <cstring>
+#include <fstream>
+#include <map>
+#include <sstream>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 using namespace wheel;
@@ -484,10 +501,22 @@ public:
 	/// One frame in, one picture out, both top row first.
 	bool render( const Image& source, int frame, Image* out )
 	{
-		//A synthetic clock, declared in seconds: the harness renders as fast
-		//as the GPU allows, so the unit could not be measured.
-		plugin.SetClockScaleForTest( 1.0 );
-		plugin.SetTime( static_cast< double >( frame ) / 60.0 );
+		if( pipeFps > 0.0 )
+		{
+			//--pipe: milliseconds, as Resolume sends them, at the take's own
+			//frame rate. Computed from the frame index in double every time,
+			//never accumulated, so frame 100,000 is as exact as frame 1.
+			//Declared rather than measured for the same reason as below.
+			plugin.SetClockScaleForTest( 0.001 );
+			plugin.SetTime( static_cast< double >( frame ) * 1000.0 / pipeFps );
+		}
+		else
+		{
+			//A synthetic clock, declared in seconds: the harness renders as
+			//fast as the GPU allows, so the unit could not be measured.
+			plugin.SetClockScaleForTest( 1.0 );
+			plugin.SetTime( static_cast< double >( frame ) / 60.0 );
+		}
 
 		if( tone )
 			injectTone( plugin, frame );
@@ -530,8 +559,9 @@ public:
 
 	int width     = 0;
 	int height    = 0;
-	bool tone     = false;
-	int fireFrame = -1;
+	bool tone      = false;
+	int fireFrame  = -1;
+	double pipeFps = 0.0;//> 0: the --pipe clock, milliseconds at this rate
 
 private:
 	void release()
@@ -1549,6 +1579,256 @@ int runBench( const std::vector< std::string >& settings, int frames )
 	return 0;
 }
 
+//---------------------------------------------------------------------------
+// --pipe cue sheet: one `frame Parameter Name value` per line, applied when
+// the frame number is reached and linearly interpolated between keys -- the
+// fleet's format (plumbicon's pbtest, cadence's cdtest), so one filming
+// script drives any of the plugins. The value is what the host sends:
+// 0..1 for a slider, the element value for an option (Eye Mode 1 is
+// Pursuit), 1..8 for Bit Depth, 0 or 1 for Bit Planes and for Fire.
+//---------------------------------------------------------------------------
+using Track = std::vector< std::pair< int, float > >;
+
+std::map< std::string, Track > loadScript( const std::string& path, std::string& error )
+{
+	std::map< std::string, Track > tracks;
+	std::ifstream file( path );
+	if( !file )
+	{
+		error = "cannot open " + path;
+		return tracks;
+	}
+
+	std::string line;
+	int lineNumber = 0;
+	while( std::getline( file, line ) )
+	{
+		++lineNumber;
+		const size_t hash = line.find( '#' );
+		if( hash != std::string::npos )
+			line.erase( hash );
+		std::istringstream in( line );
+
+		int frame = 0;
+		if( !( in >> frame ) )
+			continue;//blank or comment
+
+		//The name is everything up to the last token, because parameters
+		//have spaces in them ("Pursuit Speed") and the value never does.
+		std::vector< std::string > words;
+		std::string word;
+		while( in >> word )
+			words.push_back( word );
+		if( words.size() < 2 )
+		{
+			error = path + ":" + std::to_string( lineNumber ) + ": expected `frame Parameter Name value`";
+			return {};
+		}
+
+		const float value = std::strtof( words.back().c_str(), nullptr );
+		words.pop_back();
+		std::string name = words.front();
+		for( size_t i = 1; i < words.size(); ++i )
+			name += " " + words[ i ];
+
+		tracks[ name ].emplace_back( frame, value );
+	}
+
+	for( auto& entry : tracks )
+		std::stable_sort( entry.second.begin(), entry.second.end(),
+		                  []( const auto& a, const auto& b ) { return a.first < b.first; } );
+	return tracks;
+}
+
+/// A continuous control: interpolated between keys, held before the first
+/// and after the last. Exactly pbtest's `valueAt`.
+float rampAt( const Track& track, int frame )
+{
+	if( track.empty() )
+		return 0.0f;
+	if( frame <= track.front().first )
+		return track.front().second;
+	if( frame >= track.back().first )
+		return track.back().second;
+
+	for( size_t i = 1; i < track.size(); ++i )
+	{
+		if( track[ i ].first < frame )
+			continue;
+		const float span = static_cast< float >( track[ i ].first - track[ i - 1 ].first );
+		const float t    = span > 0.0f ? ( frame - track[ i - 1 ].first ) / span : 0.0f;
+		return track[ i - 1 ].second + ( track[ i ].second - track[ i - 1 ].second ) * t;
+	}
+	return track.back().second;
+}
+
+/// A discrete control -- an option, a switch, an event: the last key at or
+/// before this frame, with no values in between, and NaN (leave it alone)
+/// before the first. An option ramped from 0 to 3 would otherwise visit
+/// every mode on the way; one held at its first key from frame 0 would make
+/// `65 Wheel Type 2` an RGBCMY wheel for the whole take; and an event held
+/// at its first key would make `30 Fire 1` a press on frame 0.
+float stepAt( const Track& track, int frame )
+{
+	float value = std::nanf( "" );
+	for( const auto& key : track )
+	{
+		if( key.first > frame )
+			break;
+		value = key.second;
+	}
+	return value;
+}
+
+//---------------------------------------------------------------------------
+// --pipe
+//
+// Raw RGBA in, raw RGBA out, one frame at a time, top row first, through the
+// real plugin class -- the same Session every check above uses, so what a
+// take shows is what the checks measured.
+//
+// The clock is SYNTHETIC and driven by the frame index: milliseconds, as
+// Resolume sends them, at --fps. Not the wall clock and not the rate the
+// pipe delivers, so a stall upstream in ffmpeg cannot shorten a saccade.
+//
+// A cue reaches the plugin only when its value changes, which is what a
+// host does. That matters for exactly one control: Fire saccades on every
+// value >= 0.5 it is SENT, so re-sending a held 1 every frame would fire a
+// saccade every frame.
+//
+// The Audio buffer is left at silence (or fed --tone's click train), so in
+// Saccade mode the only saccades are the ones Fire cues ask for.
+//---------------------------------------------------------------------------
+int runPipe( int width, int height, double fps, const std::string& scriptPath,
+             const std::vector< std::string >& settings, bool tone, int fireFrame )
+{
+	Session session( width, height );
+	session.tone      = tone;
+	session.fireFrame = fireFrame;
+	session.pipeFps   = fps;
+
+	for( const std::string& setting : settings )
+		if( !session.set( setting ) )
+			return 2;
+
+	struct Cue
+	{
+		unsigned int index;
+		bool discrete;
+		Track keys;
+		float sent;
+		bool everSent;
+	};
+	std::vector< Cue > cues;
+
+	//Names are resolved once, up front, and an unknown one refuses the whole
+	//run. A misspelled name that silently did nothing would produce a take
+	//that looks deliberate and is wrong: the default on screen, and a
+	//caption over it describing a control that never moved.
+	if( !scriptPath.empty() )
+	{
+		std::string error;
+		const std::map< std::string, Track > tracks = loadScript( scriptPath, error );
+		if( !error.empty() )
+		{
+			std::fprintf( stderr, "%s\n", error.c_str() );
+			return 2;
+		}
+
+		Wheel& plugin = session.Plugin();
+		for( const auto& entry : tracks )
+		{
+			const int index = findParameter( plugin, entry.first );
+			if( index < 0 )
+			{
+				std::fprintf( stderr, "script names '%s', which is not a parameter (try --list)\n",
+				              entry.first.c_str() );
+				return 2;
+			}
+			const unsigned int type = plugin.GetParamType( static_cast< unsigned int >( index ) );
+			if( index >= static_cast< int >( Wheel::PT_ABOUT_FIRST ) || type == FF_TYPE_BUFFER || type == FF_TYPE_TEXT )
+			{
+				std::fprintf( stderr, "script names '%s', which a cue cannot drive (%s)\n", entry.first.c_str(),
+				              type == FF_TYPE_BUFFER ? "the host's audio buffer -- use --tone" : "the About block" );
+				return 2;
+			}
+
+			Cue cue {};
+			cue.index    = static_cast< unsigned int >( index );
+			cue.discrete = type == FF_TYPE_OPTION || type == FF_TYPE_BOOLEAN || type == FF_TYPE_EVENT;
+			cue.keys     = entry.second;
+			cues.push_back( cue );
+		}
+	}
+
+	if( !session.init() )
+		return 1;
+
+	//A consumer that goes away (ffmpeg's own -frames, a head) must end the
+	//run with a short write, not kill it with a signal.
+	std::signal( SIGPIPE, SIG_IGN );
+
+	Image frame( static_cast< size_t >( width ) * height * 4 );
+	Image out;
+
+	for( int index = 0;; ++index )
+	{
+		size_t filled = 0;
+		while( filled < frame.size() )
+		{
+			const ssize_t got = read( STDIN_FILENO, frame.data() + filled, frame.size() - filled );
+			if( got <= 0 )
+				break;
+			filled += static_cast< size_t >( got );
+		}
+
+		//End of stream. A PARTIAL frame is dropped rather than padded: half
+		//a frame of black at the end of a take is a flash. It is also the
+		//commonest mistake here, a --size that does not match the stream,
+		//which otherwise shears the picture instead of saying so.
+		if( filled < frame.size() )
+		{
+			if( filled > 0 )
+				std::fprintf( stderr,
+				              "dropped %zu bytes of a partial frame at frame %d -- does --size %dx%d match the stream?\n",
+				              filled, index, width, height );
+			break;
+		}
+
+		for( Cue& cue : cues )
+		{
+			const float value = cue.discrete ? stepAt( cue.keys, index ) : rampAt( cue.keys, index );
+			if( std::isnan( value ) || ( cue.everSent && value == cue.sent ) )
+				continue;
+			session.Plugin().SetFloatParameter( cue.index, value );
+			cue.sent     = value;
+			cue.everSent = true;
+		}
+
+		if( !session.render( frame, index, &out ) )
+		{
+			std::fprintf( stderr, "ProcessOpenGL failed on frame %d\n", index );
+			return 1;
+		}
+
+		size_t written = 0;
+		while( written < out.size() )
+		{
+			const ssize_t put = write( STDOUT_FILENO, out.data() + written, out.size() - written );
+			if( put <= 0 )
+				break;
+			written += static_cast< size_t >( put );
+		}
+
+		//The consumer went away. Not an error.
+		if( written < out.size() )
+			break;
+	}
+
+	return 0;
+}
+
+//---------------------------------------------------------------------------
 void usage()
 {
 	std::printf(
@@ -1566,6 +1846,9 @@ void usage()
 		"  --negative        every check can fail\n"
 		"  --all             every check, then the negatives\n"
 		"  --bench           time ProcessOpenGL at 720p through 4K\n"
+		"  --pipe            raw RGBA frames on stdin, raw RGBA frames on stdout, at --size\n"
+		"  --script PATH     parameter cues for --pipe: 'frame Parameter Name value' per line\n"
+		"  --fps N           --pipe's synthetic clock, frames per second (default 60)\n"
 		"  --help\n" );
 }
 } // namespace
@@ -1573,8 +1856,10 @@ void usage()
 int main( int argc, char** argv )
 {
 	std::string outPath = "/tmp/wheel.png";
+	std::string scriptPath;
 	int width = 1280, height = 720, frames = 24, fireFrame = -1;
-	bool tone = false, wantList = false, wantBench = false, wantAll = false, wantNegative = false;
+	double fps = 60.0;
+	bool tone = false, wantList = false, wantBench = false, wantAll = false, wantNegative = false, wantPipe = false;
 	std::vector< std::string > checks;
 	std::vector< std::string > settings;
 
@@ -1613,6 +1898,12 @@ int main( int argc, char** argv )
 			settings.push_back( argv[ ++i ] );
 		else if( argument == "--list" )
 			wantList = true;
+		else if( argument == "--pipe" )
+			wantPipe = true;
+		else if( argument == "--script" && hasNext )
+			scriptPath = argv[ ++i ];
+		else if( argument == "--fps" && hasNext )
+			fps = std::strtod( argv[ ++i ], nullptr );
 		else if( argument == "--bench" )
 			wantBench = true;
 		else if( argument == "--all" )
@@ -1632,6 +1923,20 @@ int main( int argc, char** argv )
 	if( width <= 0 || height <= 0 || frames <= 0 )
 	{
 		std::fprintf( stderr, "width, height and frames must all be positive\n" );
+		return 2;
+	}
+	if( !( fps > 0.0 ) )
+	{
+		std::fprintf( stderr, "--fps must be positive\n" );
+		return 2;
+	}
+	//The plugin clamps a frame to 1/240..1/24 s (Clock.h), as it would in
+	//Resolume; outside that the saccade's decay runs at the clamped rate.
+	if( wantPipe && ( fps < 24.0 || fps > 240.0 ) )
+		std::fprintf( stderr, "warning: --fps %g is outside 24..240; the plugin clamps its frame time there\n", fps );
+	if( !scriptPath.empty() && !wantPipe )
+	{
+		std::fprintf( stderr, "--script is for --pipe\n" );
 		return 2;
 	}
 
@@ -1679,6 +1984,11 @@ int main( int argc, char** argv )
 		CGLDestroyContext( context );
 		return code;
 	};
+
+	//Before anything else that could print: stdout is the video in --pipe,
+	//and one stray line of text in it is a torn frame for the rest of the take.
+	if( wantPipe )
+		return finish( runPipe( width, height, fps, scriptPath, settings, tone, fireFrame ) );
 
 	if( !checks.empty() || wantNegative )
 	{
