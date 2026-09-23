@@ -97,6 +97,20 @@ so the footage is rendered by this repository's own offline harness
 (`whtest --pipe`, driven by a cue sheet) rather than filmed off a screen, and
 the clips are Resolume's bundled demo media.*
 
+## Try it in your browser
+
+**<https://wheel-demo.stoatworks-labs.com>**
+
+Not the plugin — the four shaders from `source/Shaders.cpp`, copied across unedited and
+run in WebGL2, with the plugin's own controls, groups and defaults. The CPU half — the
+wheel, the per-channel normalisation, the sub-field schedule, the eye and each
+sub-field's placement from `Segments.cpp`, the Track eye's block matcher, the saccade's
+hash and decay — is a hand port to JavaScript that nothing but a reader checks;
+`demo/tools/check_shaders.py`, run by `tools/verify.sh`, fails if a character of the
+shaders drifts. There is no audio in a browser, so the `Audio` buffer and the onset
+detector are absent and a saccade fires only on Fire (a toggle there, not an event).
+Start with Eye Mode on Pursuit. The page lists every difference at its foot.
+
 ## Controls
 
 The full manual, control by control, is the [user guide](docs/USER-GUIDE.md).
@@ -186,8 +200,10 @@ they act only during a saccade, and a saccade needs an audio onset (win-lab has 
 sound device) or a Fire press, which the gate does not send; `--saccade` and the sweep
 prove both live. Software rendering says nothing about a GPU or about speed.
 
-**Not done:** never run in Resolume on macOS; no OpenFX port and no browser demo (not
-required at 0.1.0); no factory presets; the audio
+**Not done:** never run in Resolume on macOS; no OpenFX port (not
+required at 0.1.0); the [browser demo](https://wheel-demo.stoatworks-labs.com) runs the
+plugin's own shaders but its CPU half is a hand port only a reader checks, and it has
+no audio side; no factory presets; the audio
 path has only ever seen the harness's synthetic spectra, and nobody has
 measured what Resolume's 64 FFT bins are; the Track eye is a global
 estimate that follows whatever most of the picture is doing, not the object

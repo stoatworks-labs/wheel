@@ -96,7 +96,7 @@ one texel — never fitted to a number this Mac printed. See AGENTS.md.
   the Arena gate 8 of 9 on win-lab (Arena 7.27.1, llvmpipe) on 2026-09-23; the
   ninth read Saccade Size and Saccade Time dead because the gate never fires a
   saccade.
-- No OpenFX port, no browser demo, no factory presets.
+- No OpenFX port, no factory presets. The browser demo is below.
 - The audio path has only seen the harness's synthetic spectra.
 
 ## Diagnostics
@@ -108,3 +108,25 @@ frame 60.
 
     ~/Library/Logs/wheel/wheel.YYYY-MM-DD.log             (macOS)
     %LOCALAPPDATA%\wheel\logs\wheel.YYYY-MM-DD.log          (Windows)
+
+## Browser demo
+
+`demo/` is a static page at **wheel-demo.stoatworks-labs.com**, deployed by
+`cf-run npx wrangler deploy` from the repo root (`wrangler.toml`, a
+static-assets-only Worker — no build step, no Pages, no `_redirects`).
+
+- `demo/vendor/` is vendored from
+  `infrastructure/stoatworks-backend/resolume-demo/kit/` and is **not** a place
+  to edit. Re-sync with
+  `~/Projects/infrastructure/stoatworks-backend/resolume-demo/sync.sh wheel`
+  and confirm it says `synced wheel` rather than skipping.
+- The four shader constants in `demo/plugin.js` are `source/Shaders.cpp`
+  verbatim, and `demo/tools/check_shaders.py` (run by `verify.sh`) fails on a
+  single character of drift.
+- **Everything else in `demo/plugin.js` is a hand port** of `Controls.cpp`,
+  `Segments.cpp`, `estimateMotion`, the saccade's hash and decay, and the
+  clamping half of `Clock.cpp`, and **nothing checks it but a reader.** Change
+  the schedule or the eye in C++ and it has to be changed there too.
+- Absent from the page and said so on it: the `Audio` buffer and `Onset.cpp`
+  (a browser has no Resolume FFT parameter), the clock-unit voting, and the
+  About block. Fire is a toggle the renderer releases; Bit Depth is a slider.

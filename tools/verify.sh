@@ -150,6 +150,27 @@ else
 fi
 
 #---------------------------------------------------------------------------
+# The browser demo's copy of the same GLSL.
+#
+# `demo/plugin.js` cannot include a C++ file, so it carries its own copy of
+# every shader. This compares the two character for character -- reformatting
+# counts, deliberately, because "it is only whitespace" is how a real change
+# gets waved through. It says nothing about the demo's PORT of the CPU half;
+# only a reader can check that.
+#---------------------------------------------------------------------------
+step "demo: the browser copy of the shaders"
+if [ -f demo/tools/check_shaders.py ]; then
+	if python3 demo/tools/check_shaders.py >/tmp/wheel-demo-shaders.log 2>&1; then
+		pass "$( tail -1 /tmp/wheel-demo-shaders.log )"
+	else
+		fail "the demo's shaders have drifted -- see /tmp/wheel-demo-shaders.log"
+		tail -12 /tmp/wheel-demo-shaders.log
+	fi
+else
+	printf '   skipped: no demo/\n'
+fi
+
+#---------------------------------------------------------------------------
 # The build being verified. Universal, Release, from a clean configure.
 #---------------------------------------------------------------------------
 step "build: a fresh universal Release build"

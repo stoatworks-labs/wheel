@@ -356,8 +356,8 @@ suites, all passing, every picture check at 320×180 and 1280×720.
 - **The Track eye is a global estimate.** It follows whatever most of the
   picture is doing, to a grid cell, with a texture-dependent bias from the
   parabolic refinement. It is not the object the viewer is looking at.
-- **No OpenFX port, no browser demo** (not required at 0.1.0), no factory
-  presets.
+- **No OpenFX port** (not required at 0.1.0), no factory presets. The browser
+  demo exists (2026-09-24); its CPU half is a hand port — see below.
 - **`--pipe` has filmed one test clip**, not the release video: 75 frames of
   ffmpeg's `testsrc2` at 640×360, by eye (Still clean, Pursuit fringed, a
   Fire cue saccading, RGBCMY brightening the greys, Three Chip's static
@@ -484,3 +484,31 @@ The brief said to decide and write it down.
 - **`photofinish`** — the shape of the rasteriser audit and the negative
   controls.
 - **`oxbow`** — `oxbow probe` is what loads this bundle as a host.
+
+## The browser demo, 2026-09-24
+
+- **The whole retina is on the page.** All three passes — copy, grid, integrate —
+  run from the plugin's own GLSL, and the CPU half is ported whole: `Segments.cpp`
+  (the four wheels, the per-channel primary normalisation, the sub-field schedule,
+  `DisplacementAt`, `PlaceSubField`), `estimateMotion` with its synchronous
+  576-float readback of the RGBA32F grid, the PCG hash that picks a saccade's
+  direction, the per-frame decay, and the 1/240 … 1/24 s clamp from `Clock.cpp`.
+  The `timeScale`, `Interp` and `TapBias` hooks are held at the values the plugin
+  always runs with. Nothing checks the port but a reader.
+- **The audio side is absent rather than present and dead.** No `Audio` buffer, no
+  `Onset.cpp`. An onset in the plugin does nothing but set `firePending`, which is
+  exactly what Fire does, so Saccade mode is still the same code path — driven by a
+  hand instead of a kick drum.
+- **Fire is a toggle the renderer releases** (readout's precedent) and **Bit Depth
+  is a slider** over 1..8; the kit has neither an event nor an integer control.
+- **The page opens on the plugin's defaults, which show nothing** — Eye Mode Still
+  is the projector working as intended. That was kept rather than "fixed" with a
+  livelier default: the controls must be the plugin's. The tagline says, as the
+  plugin's own description does, to start with Eye Mode on Pursuit, and the first
+  preset does it.
+- **Track is honest and dull here**: the kit's clips barely move, so the block
+  matcher finds little. The disclosure says Pursuit is the way to see the fringe.
+- **Presets are the page's own**, disclosed as such; the plugin ships none.
+- Verified 2026-09-24 in headless Chrome (Metal): renders, no console errors and no
+  WebGL warnings in Pursuit, Track, Saccade (Fire pressed) and Three Chip; changing
+  Wheel Speed under Pursuit with the transport paused changes 31% of the pixels.
