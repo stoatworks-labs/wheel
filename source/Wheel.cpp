@@ -230,8 +230,10 @@ FFResult Wheel::InitGL( const FFGLViewportStruct* vp )
 
 	gridPreviousValid = false;
 	saccadeRemaining  = 0.0;
-	firePending       = false;
 	onset.Reset();
+	//firePending is deliberately NOT cleared: a host pushes parameter values
+	//before InitGL, and a Fire that arrived then is still a press. The sweep
+	//found this as a dead control when it was cleared.
 
 	diag::info( "initialised" );
 
