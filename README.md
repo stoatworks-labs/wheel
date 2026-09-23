@@ -25,6 +25,38 @@ had moved on by the time blue arrived. The colour bars fringe too: this is
 not an edge effect, it is where each field landed on the retina. Rendered by
 `whtest`, not captured from Resolume.*
 
+<!-- downloads:start -->
+
+## Download
+
+**[v0.1.0](https://github.com/stoatworks-labs/wheel/releases/tag/v0.1.0)** — prebuilt for macOS and Windows. Pick your platform:
+
+<details>
+<summary><b>macOS</b> — Universal (Apple Silicon + Intel)</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| Universal (Apple Silicon + Intel) · .dmg disk image | [`wheel-0.1.0-macos-universal.dmg`](https://github.com/stoatworks-labs/wheel/releases/download/v0.1.0/wheel-0.1.0-macos-universal.dmg) | 405 KB |
+| Universal (Apple Silicon + Intel) · .zip archive | [`wheel-macos-universal.zip`](https://github.com/stoatworks-labs/wheel/releases/latest/download/wheel-macos-universal.zip) | 163 KB |
+
+</details>
+
+<details>
+<summary><b>Windows</b> — x64</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| x64 · .exe installer | [`wheel-0.1.0-windows-x86_64-setup.exe`](https://github.com/stoatworks-labs/wheel/releases/download/v0.1.0/wheel-0.1.0-windows-x86_64-setup.exe) | 224 KB |
+| x64 · .zip archive | [`wheel-windows-x86_64.zip`](https://github.com/stoatworks-labs/wheel/releases/latest/download/wheel-windows-x86_64.zip) | 116 KB |
+
+</details>
+
+All builds, checksums and release notes: [github.com/stoatworks-labs/wheel/releases](https://github.com/stoatworks-labs/wheel/releases).
+
+The Windows builds are unsigned, so SmartScreen warns once.
+
+<!-- downloads:end -->
+
 ## The one idea
 
 **A single-chip DLP does not show a colour picture.** It shows a red one,
