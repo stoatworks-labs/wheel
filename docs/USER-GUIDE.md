@@ -43,7 +43,8 @@ Avenue uses the same layout under its own folder name. The effect then appears i
 browser as **SW Wheel**.
 
 The macOS download is a universal build (Apple silicon and Intel), as a `.dmg` or a `.zip`: open
-it and drag `Wheel.bundle` into the folder above. The Windows download is an x64 installer or a
+it and drag `Wheel.bundle` into the folder above. It is **Developer ID-signed and notarised**,
+so the bundle simply loads. The Windows download is an x64 installer or a
 `.zip`. The installer asks where to put the plugin — point it at the folder above. It is not
 code-signed, so it trips SmartScreen once: **More info** → **Run anyway**.
 
@@ -323,8 +324,7 @@ White Gain.
 **It is slow.** RGBCMY at 6x under a moving eye is the heaviest setting there is. See Performance.
 
 **SW Wheel is not in the effects browser.** Check the folder under Installing, and that Resolume
-was restarted. On macOS, a bundle downloaded through a browser that macOS will not open can be
-cleared with `xattr -dr com.apple.quarantine` on the bundle.
+was restarted.
 
 **The effect does nothing at all**, not even with Eye Mode on Pursuit. A shader that will not
 compile looks exactly like that, and the real message is in the log:
