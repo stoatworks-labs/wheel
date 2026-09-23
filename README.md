@@ -57,6 +57,14 @@ None of it is drawn:
 projector fringe — red and blue panels a few pixels off and slightly
 rotated against green.*
 
+[![Wheel — a single-chip DLP projector as an effect, for Resolume](docs/video-thumb.png)](https://www.youtube.com/watch?v=_HyLrvH5D88)
+
+*[Watch it](https://www.youtube.com/watch?v=_HyLrvH5D88) — 49 seconds:
+a still eye seeing the clip exactly and a pursuing eye splitting every edge, the Wheel Speed ladder from 1x to 6x, saccades flashing a rainbow and settling, RGB against RGBW, Bit Planes breaking a glow into bands, and Three Chip's static misconvergence. Every frame is the real plugin's output: an FFGL plugin has no window,
+so the footage is rendered by this repository's own offline harness
+(`whtest --pipe`, driven by a cue sheet) rather than filmed off a screen, and
+the clips are Resolume's bundled demo media.*
+
 ## Controls
 
 The full manual, control by control, is the [user guide](docs/USER-GUIDE.md).
