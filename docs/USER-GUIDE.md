@@ -22,7 +22,7 @@ field landed. Rendered by the offline harness, not captured from Resolume.*
 > to within 0.0003; and all 23 controls the sweep can reach measurably change the picture. It has **never
 > been loaded into Resolume on macOS** — the one host it has run in is the fleet's own test host,
 > `oxbow`, which reads its name, id and type.
-> On Windows: (to be filled after the Arena run).
+> On Windows, a build of v0.1.0 loads, registers and renders in Resolume Arena 7.27.1, with every control matching what the plugin declares — on software rendering, so that says nothing about a GPU. Two controls that only act during a saccade, Saccade Size and Saccade Time, could not be shown moving there, because nothing fired a saccade.
 > Try it on a spare layer before you put it in a show.
 >
 > This codebase was created with AI assistance, directed and reviewed by a human author.

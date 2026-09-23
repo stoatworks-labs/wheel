@@ -332,31 +332,38 @@ suites, all passing, every picture check at 320×180 and 1280×720.
 
 ### Assumed, or not done
 
-- ☠️ **Never loaded into Resolume**, on any platform. Nothing here has
-  driven a host; `oxbow probe` is the only thing that has opened the bundle
-  as one. How 24 controls in five groups present, whether Resolume draws
-  `Fire` as a button with one rising edge per press, and what the host's
+- ☠️ **Never loaded into Resolume on macOS.** On Windows, v0.1.0's CI build
+  passed the fleet Arena gate 8 of 9 in Arena 7.27.1 on llvmpipe (2026-09-23):
+  it loads, registers as `SW Wheel` / `WH01` / effect, all 30 host controls
+  match the declaration, it renders and the log is clean. The ninth, controls,
+  read Saccade Size and Saccade Time dead: they act only during a saccade, and
+  the gate sends neither an audio onset (win-lab has no sound device) nor a
+  Fire press; `--saccade` and the sweep prove both. (Red dx read live in one
+  gate run and dead in the other — a gate flake.) On macOS `oxbow probe` is
+  the only host that has opened the bundle. How the controls present on
+  macOS, whether Resolume draws `Fire` as a button with one rising edge per press, and what the host's
   blend state does on the way in are untested.
 - ☠️ **The audio path has only seen the harness's synthetic spectra.** Nobody
   has measured Resolume's 64 bins; the detector depends on nothing but "a
   hit makes some of them rise", and that is an assumption.
-- **Nothing has run on a GPU-less rasteriser.** The argument in the audit
-  table is that no check *can* depend on the rasteriser; it is an argument.
-  CI is written and has never run, because there is no remote.
+- **The harness has never run on a GPU-less rasteriser.** The plugin has
+  rendered on llvmpipe in Arena, but only the gate's checks were made there.
+  The argument in the audit table is that no check *can* depend on the
+  rasteriser; it is an argument. CI runs on GitHub and is green, but its macOS
+  runner has no GL, so it runs only the checks that need none.
 - **Nothing has run on Intel.** The build is universal and `lipo` says so;
   only the arm64 slice has executed.
 - **The Track eye is a global estimate.** It follows whatever most of the
   picture is doing, to a grid cell, with a texture-dependent bias from the
   parabolic refinement. It is not the object the viewer is looking at.
 - **No OpenFX port, no browser demo** (not required at 0.1.0), no factory
-  presets, no release.
+  presets.
 - **`--pipe` has filmed one test clip**, not the release video: 75 frames of
   ffmpeg's `testsrc2` at 640×360, by eye (Still clean, Pursuit fringed, a
   Fire cue saccading, RGBCMY brightening the greys, Three Chip's static
   fringe, 3 bit planes banding). `verify.sh` asserts the round trip at
   64×36; no picture measurement goes through the pipe beyond "bitwise when
   still, different when not".
-- `StoatworksAbout.h` and `ATTRIBUTIONS.md` are provisional hand copies.
 
 ---
 

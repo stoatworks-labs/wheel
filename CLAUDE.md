@@ -91,11 +91,12 @@ one texel — never fitted to a number this Mac printed. See AGENTS.md.
 - FFGL id is `WH01`, name `SW Wheel`.
 
 ## Not done yet
-- **Never loaded into Resolume**, on any platform. Everything here is the
-  offline harness against the real plugin class.
-- No OpenFX port, no browser demo, no factory presets, no release.
-- `StoatworksAbout.h` and `ATTRIBUTIONS.md` are provisional hand copies;
-  CI has never run (no remote).
+- **Never loaded into Resolume on macOS.** Everything numeric is the offline
+  harness against the real plugin class. The Windows CI build of v0.1.0 passed
+  the Arena gate 8 of 9 on win-lab (Arena 7.27.1, llvmpipe) on 2026-09-23; the
+  ninth read Saccade Size and Saccade Time dead because the gate never fires a
+  saccade.
+- No OpenFX port, no browser demo, no factory presets.
 - The audio path has only seen the harness's synthetic spectra.
 
 ## Diagnostics

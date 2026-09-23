@@ -9,8 +9,9 @@
 > cases as an exact translation, fractional ones to a derived 8-bit bound),
 > and every one of those checks is shown to **fail** when the model is
 > perturbed — see [Status](#status). It has **never been loaded into
-> Resolume**, on any platform. Check it in your own rig before trusting it in
-> a show.
+> Resolume on macOS**. On Windows, a build of v0.1.0 loads, registers and
+> renders in Resolume Arena 7.27.1 with every control as declared, on software
+> rendering. Check it in your own rig before trusting it in a show.
 
 A single-chip DLP projector — the colour wheel, the retina that adds its
 sub-fields up, and the rainbow effect a moving eye sees through it — as an
@@ -93,8 +94,8 @@ Two worth knowing:
 
 ## Status
 
-**v0.1.0, and honestly early.** It has **never been loaded into Resolume**,
-on any platform, and never installed into Extra Effects. Everything below is
+**v0.1.0, and honestly early.** It has **never been loaded into Resolume on
+macOS** (Windows is below the render-cost table). Everything else below is
 the offline harness, which drives the real plugin class headlessly through
 the real FFGL sequence. Measured on an M4 Max, macOS 26.4, on 2026-09-23.
 Run it yourself with `tools/verify.sh`, which builds the universal bundle
@@ -136,15 +137,24 @@ The heaviest wheel is 36 sub-fields a pixel, each a box of up to nine
 hand-rolled bilinear taps; at 4K under pursuit that is more than a 60 fps
 frame. RGB at 2x is six.
 
-**Not done:** never run in Resolume; no OpenFX port and no browser demo (not
+**Windows, in Resolume Arena 7.27.1** (win-lab, Mesa llvmpipe, no GPU, 2026-09-23):
+a CI build of this source loads from Extra Effects, registers as `SW Wheel` / `WH01` /
+effect, all 30 host controls match the declaration in name, order, type, range and
+default, it renders, and Arena's log stays clean: 8 of 9 of the fleet gate's checks.
+The ninth, controls, failed on two: Saccade Size and Saccade Time read dead, because
+they act only during a saccade, and a saccade needs an audio onset (win-lab has no
+sound device) or a Fire press, which the gate does not send; `--saccade` and the sweep
+prove both live. Software rendering says nothing about a GPU or about speed.
+
+**Not done:** never run in Resolume on macOS; no OpenFX port and no browser demo (not
 required at 0.1.0); no factory presets; the audio
 path has only ever seen the harness's synthetic spectra, and nobody has
 measured what Resolume's 64 FFT bins are; the Track eye is a global
 estimate that follows whatever most of the picture is doing, not the object
-you are looking at; CI is written and has never run, because there is no
-remote. `StoatworksAbout.h` and `ATTRIBUTIONS.md` are provisional hand
-copies. See [AGENTS.md](AGENTS.md) for the full list of what is assumed
-rather than measured, and for the traps.
+you are looking at; CI's macOS runner has no GPU, so it runs only the
+checks that need none, and every picture check is local. See
+[AGENTS.md](AGENTS.md) for the full list of what is assumed rather than
+measured, and for the traps.
 
 ## Build
 
