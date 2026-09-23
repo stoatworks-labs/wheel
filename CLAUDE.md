@@ -6,7 +6,8 @@ its sub-fields, and the rainbow effect a moving eye sees — as an FFGL
 universal `.bundle` (macOS) + Windows `.dll`. MIT.
 
 Read `AGENTS.md` before changing the schedule, the normalisation or the
-integrate shader.
+integrate shader. The operator's manual is `docs/USER-GUIDE.md`: every range
+and behaviour in it is read off the source, so a control change updates it.
 
 ## Commands (CMake)
 - Configure: `cmake -B build -DCMAKE_BUILD_TYPE=Release`
@@ -92,7 +93,7 @@ one texel — never fitted to a number this Mac printed. See AGENTS.md.
 ## Not done yet
 - **Never loaded into Resolume**, on any platform. Everything here is the
   offline harness against the real plugin class.
-- No OpenFX port, no browser demo, no user guide, no factory presets, no release.
+- No OpenFX port, no browser demo, no factory presets, no release.
 - `StoatworksAbout.h` and `ATTRIBUTIONS.md` are provisional hand copies;
   CI has never run (no remote).
 - The audio path has only seen the harness's synthetic spectra.

@@ -71,7 +71,7 @@ CONTEXT = {
 }
 
 # The FFT buffer is the host's to fill and the About block is a text line and
-# three browser buttons -- sweeping those opens a tab per press.
+# four browser buttons -- sweeping those opens a tab per press.
 SKIP_KINDS = {"buffer", "about", "text"}
 
 

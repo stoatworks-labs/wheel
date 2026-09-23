@@ -4,8 +4,8 @@
  * PROVISIONAL HAND COPY, in the shape stoatworks-backend/scripts/sync-about.py
  * generates. The project is not yet in the website's projects.json, so the
  * sync does not know it; once it is registered, re-run the sync and this file
- * is overwritten. `guide` is empty because no user guide exists, so the About
- * block has three buttons rather than four.
+ * is overwritten. `guide` points where the site publishes docs/USER-GUIDE.md
+ * for every plugin (plumbicon's shape), so the About block has four buttons.
  *
  * `version` here is a fallback read from this repo's own manifest at sync
  * time. Anything with a build step injects the real one at build time and
@@ -19,7 +19,7 @@ namespace stoatworks::about
     inline constexpr auto slug = "wheel";
     inline constexpr auto hook = "A single-chip DLP projector, rainbow effect and all, for Resolume";
     inline constexpr auto licence = "MIT";
-    inline constexpr auto guide = "";
+    inline constexpr auto guide = "https://stoatworks-labs.com/software/wheel/guide/";
     inline constexpr auto page = "https://stoatworks-labs.com/software/wheel/";
     inline constexpr auto repo = "https://github.com/stoatworks-labs/wheel";
     inline constexpr auto versionFallback = "v0.1.0";

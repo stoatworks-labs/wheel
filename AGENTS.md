@@ -421,6 +421,25 @@ The brief said to decide and write it down.
   therefore saccades only on Fire cues. Feeding a real soundtrack's spectrum
   would need Resolume's 64 bins characterised first, and nobody has.
 - **`--script` without `--pipe` is refused** rather than ignored.
+- **The user guide (`docs/USER-GUIDE.md`) is plumbicon's shape**, every
+  range and behaviour read off the source, not the README. Three things it
+  says that the code forced: Red/Blue dx above the middle moves that colour
+  LEFT and dy UP (the panel is displaced, so what lands at x came from
+  x + dx — `--converge`'s convention); the RGBW 64 -> 128 figure is at
+  Output Gamma 1.0, where `--white` measures it (at 2.2 it is ~88, stated as
+  arithmetic); and at gamma 2.2 even eight bit planes crush the deepest
+  shadows, because the planes quantise linear light.
+- **The guide says nothing about notarisation.** `release.yml` ad-hoc signs
+  the macOS bundle and nothing in this repo notarises it, so the guide gives
+  the quarantine remedy under "If it looks wrong" rather than promising a
+  signed download. The Windows installer is built `--plain` and is not
+  code-signed, which the guide does say.
+- **`guide` in `StoatworksAbout.h` is set** to
+  `https://stoatworks-labs.com/software/wheel/guide/`, plumbicon's shape,
+  so the About block has four buttons. Like `page`, it 404s until the site
+  registers the project and publishes the guide; the sync overwrites this
+  hand copy then. The About block is last in the enum, so the extra id
+  shifts nothing.
 - **The bench reports three loads**, because "the cost" of this plugin
   ranges over a factor of six depending on the wheel and the eye, and a
   single number would be either a lie or a worst case.

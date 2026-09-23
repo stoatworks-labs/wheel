@@ -58,6 +58,8 @@ rotated against green.*
 
 ## Controls
 
+The full manual, control by control, is the [user guide](docs/USER-GUIDE.md).
+
 **Wheel** — *Wheel Type* (`RGB`, `RGBW`, `RGBCMY` in the BrilliantColor
 order R Y G C B M, `Custom`), *Wheel Speed* (1x, 2x, 3x, 4x, 6x rotations per
 frame; the sub-field times follow exactly), *Red/Green/Blue/White Width*
