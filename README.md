@@ -36,8 +36,8 @@ not an edge effect, it is where each field landed on the retina. Rendered by
 
 | Build | Download | Size |
 | --- | --- | --- |
-| Universal (Apple Silicon + Intel) · .dmg disk image | [`wheel-0.1.0-macos-universal.dmg`](https://github.com/stoatworks-labs/wheel/releases/download/v0.1.0/wheel-0.1.0-macos-universal.dmg) | 405 KB |
-| Universal (Apple Silicon + Intel) · .zip archive | [`wheel-macos-universal.zip`](https://github.com/stoatworks-labs/wheel/releases/latest/download/wheel-macos-universal.zip) | 163 KB |
+| Universal (Apple Silicon + Intel) · .dmg disk image | [`wheel-0.1.0-macos-universal.dmg`](https://github.com/stoatworks-labs/wheel/releases/download/v0.1.0/wheel-0.1.0-macos-universal.dmg) | 218 KB |
+| Universal (Apple Silicon + Intel) · .zip archive | [`wheel-macos-universal.zip`](https://github.com/stoatworks-labs/wheel/releases/latest/download/wheel-macos-universal.zip) | 179 KB |
 
 </details>
 
@@ -53,7 +53,7 @@ not an edge effect, it is where each field landed on the retina. Rendered by
 
 All builds, checksums and release notes: [github.com/stoatworks-labs/wheel/releases](https://github.com/stoatworks-labs/wheel/releases).
 
-The Windows builds are unsigned, so SmartScreen warns once.
+macOS builds are signed and notarised and open normally. The Windows builds are unsigned, so SmartScreen warns once.
 
 <!-- downloads:end -->
 
