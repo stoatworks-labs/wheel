@@ -359,7 +359,10 @@ not be allocated, and the unit of the host's clock.
   split a pixel across a white segment; this is the choice that leaves a saturated colour alone.
 - **A host that renders the same frame twice** — a preview and a record, say — moves a saccade on
   twice. Nothing in FFGL tells a plugin that it happened.
-- **No presets**, no OpenFX version and no browser demo.
+- **No presets** and no OpenFX version.
+- **There is a browser demo** at [wheel-demo.stoatworks-labs.com](https://wheel-demo.stoatworks-labs.com).
+  It is a port to a web page, not the plugin: the shaders run in WebGL2 and any CPU
+  half is rewritten in JavaScript. The page lists what it does not reproduce.
 
 ---
 
