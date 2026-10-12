@@ -1,29 +1,26 @@
 # Wheel
 
 > **AI-assisted project.** This codebase was created with [Claude](https://claude.com/claude-code)
-> (Anthropic), directed and reviewed by a human author. The model is
-> verified numerically by an offline harness that drives the real plugin
-> class in a headless GL context: a still eye is proved to return the input
-> **bitwise** at every wheel speed on a moving clip, a pursuit is proved to
-> land the red and green fields exactly `v(t_G − t_R)` apart (whole-pixel
-> cases as an exact translation, fractional ones to a derived 8-bit bound),
-> and every one of those checks is shown to **fail** when the model is
-> perturbed — see [Status](#status). It has **never been loaded into
-> Resolume on macOS**. On Windows, a build of v0.1.0 loads, registers and
-> renders in Resolume Arena 7.27.1 with every control as declared, on software
-> rendering. Check it in your own rig before trusting it in a show.
+> (Anthropic), directed and reviewed by a human author. The model is checked numerically by an
+> offline harness that drives the real plugin code without a host: a still eye gets the input
+> back bit for bit, a pursuit lands the red and green fields `v(t_G − t_R)` apart, and every one
+> of those checks is shown to fail when the model is nudged wrong. It's **never been loaded
+> into Resolume on macOS**. On Windows, a build of v0.1.0 loads, registers and renders in
+> Resolume Arena 7.27.1 with every control as declared, on software rendering. Check it in your
+> own rig before you trust it in a show. The numbers are under [Status](#status).
 
-A single-chip DLP projector — the colour wheel, the retina that adds its
-sub-fields up, and the rainbow effect a moving eye sees through it — as an
-FFGL effect for [Resolume](https://resolume.com) Arena and Avenue.
+A single-chip DLP projector as an FFGL effect for [Resolume](https://resolume.com) Arena and
+Avenue: the colour wheel, the retina that adds its sub-fields up, and the rainbow effect a
+moving eye sees through it. If you've ever glanced across a DLP picture and caught a little
+rainbow flickering off the bright edges, that's the one.
 
 ![A rightward pursuit over the harness's moving card: red leads and blue trails on every bright edge](docs/hero.png)
 
-*A pursuit of 12 px a frame to the right, on a 1x RGB wheel. Red leads and
-blue trails on every bright edge, because red was shown first and the eye
-had moved on by the time blue arrived. The colour bars fringe too: this is
-not an edge effect, it is where each field landed on the retina. Rendered by
-`whtest`, not captured from Resolume.*
+*A pursuit of 12 px a frame to the right, on a 1x RGB wheel. Red leads and blue trails on
+every bright edge, because red was shown first and the eye had moved on by the time blue
+arrived. The colour bars fringe as well, since what you're seeing is where each field landed
+on the retina, not anything to do with edges. Rendered by `whtest` rather than captured from
+Resolume.*
 
 <!-- downloads:start -->
 
@@ -59,19 +56,18 @@ macOS builds are signed and notarised and open normally. The Windows builds are 
 
 ## The one idea
 
-**A single-chip DLP does not show a colour picture.** It shows a red one,
-then a green one, then a blue one (and on many wheels a white or CMY
-segment), in turn, through a spinning filter wheel. The eye adds them up.
+**A single-chip DLP never actually shows a colour picture.** It shows a red one, then a green
+one, then a blue one (and on a lot of wheels a white or CMY segment too), one after another,
+through a spinning filter wheel. Your eye adds them up.
 
-It only adds them up correctly **if the eye is still relative to the
-screen.** When the eye moves — pursuing a moving object, or in a saccade
-across a bright frame — each colour field lands on the retina in a
-different place. That is the rainbow effect, and it is the whole plugin.
+It only adds them up properly **if the eye is still relative to the screen.** When the eye
+moves, following a moving object or flicking across a bright frame in a saccade, each colour
+field lands on the retina in a different place. That's the rainbow effect, and that's the
+whole plugin.
 
-So the model is a retina, not a filter. Each sub-field is shown for its
-segment's duration, and the retina integrates them, displaced by the eye's
-travel during that sub-field. Everything you recognise falls out of that.
-None of it is drawn:
+So the model is a retina rather than a filter. Each sub-field is shown for as long as its
+segment lasts, and the retina integrates them, each one shifted by how far the eye travelled
+during it. Everything you'd recognise falls out of that, and none of it is drawn on:
 
 | What you see | Why it happens |
 | --- | --- |
@@ -85,78 +81,76 @@ None of it is drawn:
 
 ![Three-chip mode with red and blue panels offset and rotated](docs/threechip.png)
 
-*Three-chip mode: no temporal fringe at all, and the other kind of
-projector fringe — red and blue panels a few pixels off and slightly
-rotated against green.*
+*Three-chip mode: no temporal fringe at all, but the other kind of projector fringe instead,
+with the red and blue panels a few pixels out and slightly rotated against green.*
 
 [![Wheel — a single-chip DLP projector as an effect, for Resolume](docs/video-thumb.png)](https://www.youtube.com/watch?v=_HyLrvH5D88)
 
-*[Watch it](https://www.youtube.com/watch?v=_HyLrvH5D88) — 49 seconds:
-a still eye seeing the clip exactly and a pursuing eye splitting every edge, the Wheel Speed ladder from 1x to 6x, saccades flashing a rainbow and settling, RGB against RGBW, Bit Planes breaking a glow into bands, and Three Chip's static misconvergence. Every frame is the real plugin's output: an FFGL plugin has no window,
-so the footage is rendered by this repository's own offline harness
-(`whtest --pipe`, driven by a cue sheet) rather than filmed off a screen, and
-the clips are Resolume's bundled demo media.*
+*[Watch it](https://www.youtube.com/watch?v=_HyLrvH5D88) (49 seconds): a still eye seeing the
+clip as it is and a pursuing eye splitting every edge, the Wheel Speed ladder from 1x to 6x,
+saccades flashing a rainbow and settling, RGB against RGBW, Bit Planes breaking a glow into
+bands, and Three Chip's static misconvergence. It's all the plugin's own output. An FFGL plugin
+doesn't have a window to film, so the footage comes from this repo's own offline harness
+(`whtest --pipe`, driven by a cue sheet) rather than a screen recording, and the clips are
+Resolume's bundled demo media.*
 
 ## Try it in your browser
 
 **<https://wheel-demo.stoatworks-labs.com>**
 
-Not the plugin — the four shaders from `source/Shaders.cpp`, copied across unedited and
-run in WebGL2, with the plugin's own controls, groups and defaults. The CPU half — the
-wheel, the per-channel normalisation, the sub-field schedule, the eye and each
-sub-field's placement from `Segments.cpp`, the Track eye's block matcher, the saccade's
-hash and decay — is a hand port to JavaScript that nothing but a reader checks;
-`demo/tools/check_shaders.py`, run by `tools/verify.sh`, fails if a character of the
-shaders drifts. There is no audio in a browser, so the `Audio` buffer and the onset
-detector are absent and a saccade fires only on Fire (a toggle there, not an event).
-Start with Eye Mode on Pursuit. The page lists every difference at its foot.
+This isn't the plugin itself. It's the four shaders from `source/Shaders.cpp`, copied across
+unedited and run in WebGL2, with the plugin's own controls, groups and defaults. The CPU half
+(the wheel, the per-channel normalisation, the sub-field schedule, the eye and each
+sub-field's placement from `Segments.cpp`, the Track eye's block matcher, the saccade's hash
+and decay) is a hand port to JavaScript that nothing checks except a person reading it.
+`demo/tools/check_shaders.py`, run by `tools/verify.sh`, fails if a single character of the
+shaders drifts. There's no audio in a browser, so the `Audio` buffer and the onset detector
+aren't there, and a saccade only fires on Fire (a toggle there, not an event). Start with Eye
+Mode on Pursuit. The page lists every difference at the bottom.
 
 ## Controls
 
 The full manual, control by control, is the [user guide](docs/USER-GUIDE.md).
 
-**Wheel** — *Wheel Type* (`RGB`, `RGBW`, `RGBCMY` in the BrilliantColor
+**Wheel**: *Wheel Type* (`RGB`, `RGBW`, `RGBCMY` in the BrilliantColor
 order R Y G C B M, `Custom`), *Wheel Speed* (1x, 2x, 3x, 4x, 6x rotations per
 frame; the sub-field times follow exactly), *Red/Green/Blue/White Width*
 (Custom only), *White Gain* (how bright the secondary segments are, against
 the primaries).
 
-**Eye** — *Eye Mode* (`Still`: the projector working as intended; `Pursuit`:
+**Eye**: *Eye Mode* (`Still`: the projector working as intended; `Pursuit`:
 a set velocity and angle; `Track`: the clip's own dominant motion, by coarse
 block matching; `Saccade`: still, with a burst on every audio onset), *Pursuit
 Speed* (0–32 px/frame), *Pursuit Angle*, *Saccade Size* (0–200 px of travel),
 *Saccade Time* (20 ms–1 s, the decay), *Fire* (a saccade by hand, in any
 mode), *Audio*.
 
-**DMD** — *Bit Planes*, *Bit Depth* (1–8).
+**DMD**: *Bit Planes*, *Bit Depth* (1–8).
 
-**Three-Chip** — *Chip Mode* (`Single Chip`, `Three Chip`), *Red dx*, *Red dy*,
+**Three-Chip**: *Chip Mode* (`Single Chip`, `Three Chip`), *Red dx*, *Red dy*,
 *Blue dx*, *Blue dy* (±8 px), *Panel Rotate* (±1°).
 
-**Output** — *Mix*, *Output Gamma* (the picture is linearised on the way in
+**Output**: *Mix*, *Output Gamma* (the picture is linearised on the way in
 and re-encoded on the way out; 1.0 is linear and skips the pow).
 
-Two worth knowing:
+Two things worth knowing:
 
-- **With Eye Mode on Still, most controls do nothing**, and that is correct
-  rather than a bug — the primaries are normalised so that a still eye
-  reconstructs the input exactly whatever the wheel. Eye Mode is the first
-  thing to reach for.
-- **A white segment can push a white past 1.0.** That is what a real RGBW
-  wheel does to the ratio of white brightness to colour brightness; the
-  re-encode clips it. Turn White Gain down if it bothers you.
+- **With Eye Mode on Still, most controls do nothing**, and that's how it should be: the
+  primaries are normalised so a still eye gets the input back exactly, whatever the wheel.
+  Eye Mode is the first thing to reach for.
+- **A white segment can push a white past 1.0.** That's what a real RGBW wheel does to the
+  ratio of white brightness to colour brightness (and why the white lumens on the spec sheet
+  look so good). The re-encode clips it. Turn White Gain down if it bothers you.
 
 ## Status
 
-**v0.1.0, and honestly early.** It has **never been loaded into Resolume on
-macOS** (Windows is below the render-cost table). Everything else below is
-the offline harness, which drives the real plugin class headlessly through
-the real FFGL sequence. Measured on an M4 Max, macOS 26.4, on 2026-09-23.
-Run it yourself with `tools/verify.sh`, which builds the universal bundle
-from scratch and takes about a minute. Every picture check runs at
-**320×180** (what CI's GPU-less runner uses) **and 1280×720**, and every
-tolerance is derived from a lattice — one 8-bit code, one texel — not fitted
-to a number this machine printed.
+**v0.1.0, and still early days.** It's **never been loaded into Resolume on macOS** (Windows
+is below the render-cost table). Everything else below comes from the offline harness, which
+drives the real plugin class headless, through the real FFGL sequence. Measured on an M4 Max,
+macOS 26.4, on 2026-09-23. You can run it yourself with `tools/verify.sh`, which builds the
+universal bundle from scratch and takes about a minute. Every picture check runs at 320×180
+(what CI's GPU-less runner uses) and 1280×720, and every tolerance comes from a lattice (one
+8-bit code, one texel) rather than being fitted to whatever number this machine printed.
 
 | Check | Result |
 | --- | --- |
@@ -187,30 +181,27 @@ to a number this machine printed.
 | 2560×1440 | 1.66 ms | 9.61 ms | 2.65 ms |
 | 3840×2160 | **3.29 ms** | **19.1 ms** | 5.19 ms |
 
-The heaviest wheel is 36 sub-fields a pixel, each a box of up to nine
-hand-rolled bilinear taps; at 4K under pursuit that is more than a 60 fps
-frame. RGB at 2x is six.
+The heaviest wheel is 36 sub-fields a pixel, each a box of up to nine hand-rolled bilinear
+taps, so at 4K under pursuit it takes longer than a 60 fps frame. RGB at 2x is six.
 
-**Windows, in Resolume Arena 7.27.1** (win-lab, Mesa llvmpipe, no GPU, 2026-09-23):
-a CI build of this source loads from Extra Effects, registers as `SW Wheel` / `WH01` /
-effect, all 30 host controls match the declaration in name, order, type, range and
-default, it renders, and Arena's log stays clean: 8 of 9 of the fleet gate's checks.
-The ninth, controls, failed on two: Saccade Size and Saccade Time read dead, because
-they act only during a saccade, and a saccade needs an audio onset (win-lab has no
-sound device) or a Fire press, which the gate does not send; `--saccade` and the sweep
-prove both live. Software rendering says nothing about a GPU or about speed.
+**Windows, in Resolume Arena 7.27.1** (win-lab, Mesa llvmpipe, no GPU, 2026-09-23): a CI
+build of this source loads from Extra Effects and registers as `SW Wheel` / `WH01` / effect,
+all 30 host controls match the declaration in name, order, type, range and default, it
+renders, and Arena's log stays clean. That's 8 of 9 of the fleet gate's checks. The ninth,
+controls, failed on two: Saccade Size and Saccade Time read dead, because they only act
+during a saccade, and a saccade needs either an audio onset (win-lab hasn't got a sound
+device) or a Fire press, which the gate doesn't send. `--saccade` and the sweep show both are
+live. Software rendering says nothing about a GPU or about speed.
 
-**Not done:** never run in Resolume on macOS; no OpenFX port (not
+**Not done yet:** it's never been run in Resolume on macOS; there's no OpenFX port (not
 required at 0.1.0); the [browser demo](https://wheel-demo.stoatworks-labs.com) runs the
-plugin's own shaders but its CPU half is a hand port only a reader checks, and it has
-no audio side; no factory presets; the audio
-path has only ever seen the harness's synthetic spectra, and nobody has
-measured what Resolume's 64 FFT bins are; the Track eye is a global
-estimate that follows whatever most of the picture is doing, not the object
-you are looking at; CI's macOS runner has no GPU, so it runs only the
-checks that need none, and every picture check is local. See
-[AGENTS.md](AGENTS.md) for the full list of what is assumed rather than
-measured, and for the traps.
+plugin's own shaders, but its CPU half is a hand port only a reader checks, and it has no
+audio side; there are no factory presets; the audio path has only ever seen the harness's
+synthetic spectra, and nobody has measured what Resolume's 64 FFT bins actually are; the
+Track eye is a global estimate that follows whatever most of the picture is doing, not the
+object you're looking at; and CI's macOS runner has no GPU, so it only runs the checks that
+don't need one, and every picture check is local. [AGENTS.md](AGENTS.md) has the full list of
+what's assumed rather than measured, and the traps.
 
 ## Build
 
@@ -226,13 +217,13 @@ macOS builds universal (arm64 + x86_64) by default; add
 `-DCMAKE_OSX_ARCHITECTURES=arm64` for a faster development build. Needs CMake
 3.15+, a C++17 compiler and the FFGL SDK submodule (pinned to `b1afaf9`).
 
-A bundle you build yourself is unsigned, which is fine locally — quarantine
-only applies to files that arrive from a browser.
+A bundle you build yourself is unsigned, which is fine locally, because quarantine only
+applies to files that arrive from a browser.
 
 ## Building and testing
 
-The harness renders the real plugin class offline and asserts one claim per
-flag, at two rasters:
+The harness renders the real plugin class offline and checks one claim per flag, at two
+rasters:
 
 ```bash
 ./build/whtest --out /tmp/frame.png --set "Eye Mode=1"   # the moving card, pursued
@@ -252,13 +243,12 @@ python3 tools/sweep.py                  # no control is silently dead
 tools/verify.sh                         # all of it, from a fresh universal build
 ```
 
-`--set "Name=value"` sets any control by its display name, repeatably;
-`--tone` pushes a synthetic click train into the audio input and `--fire N`
-presses Fire on frame N.
+`--set "Name=value"` sets any control by its display name, and you can repeat it. `--tone`
+pushes a synthetic click train into the audio input, and `--fire N` presses Fire on frame N.
 
-To film a clip through the real plugin, `--pipe` takes the fleet's raw
-format — RGBA frames on stdin, RGBA frames on stdout — on a synthetic clock
-of `--fps` frames a second, driven by an optional cue sheet:
+To film a clip through the real plugin, `--pipe` takes the fleet's raw format (RGBA frames on
+stdin, RGBA frames on stdout) on a synthetic clock of `--fps` frames a second, driven by an
+optional cue sheet:
 
 ```bash
 ffmpeg -i in.mov -f rawvideo -pix_fmt rgba - \
@@ -287,7 +277,7 @@ This project is built on other people's work — see [ATTRIBUTIONS.md](ATTRIBUTI
 
 MIT — see [LICENSE](LICENSE).
 
-The single-chip DLP — a colour wheel in front of a digital micromirror
-device, bit-plane grey, and the colour breakup a moving eye sees — is
-described in the display engineering literature and Texas Instruments'
-published DLP material. No code was taken from any projector or vendor.
+The single-chip DLP (a colour wheel in front of a digital micromirror device, bit-plane grey,
+and the colour breakup a moving eye sees) is described in the display engineering literature
+and in Texas Instruments' published DLP material. No code was taken from any projector or
+vendor.
