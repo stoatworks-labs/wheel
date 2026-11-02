@@ -439,7 +439,7 @@ The brief said to decide and write it down.
 - **The guide says nothing about notarisation.** `release.yml` ad-hoc signs
   the macOS bundle and nothing in this repo notarises it, so the guide gives
   the quarantine remedy under "If it looks wrong" rather than promising a
-  signed download. The Windows installer is built `--plain` and is not
+  signed download. The Windows installer is built `--ffgl` and is not
   code-signed, which the guide does say.
 - **`guide` in `StoatworksAbout.h` is set** to
   `https://stoatworks-labs.com/software/wheel/guide/`, plumbicon's shape,

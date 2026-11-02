@@ -48,8 +48,10 @@ browser as **SW Wheel**.
 The macOS download is a universal build (Apple silicon and Intel), as a `.dmg` or a `.zip`: open
 it and drag `Wheel.bundle` into the folder above. It's **Developer ID-signed and notarised**,
 so the bundle just loads. The Windows download is an x64 installer or a
-`.zip`. The installer asks where to put the plugin, so point it at the folder above. It isn't
-code-signed, so it trips SmartScreen once: **More info** → **Run anyway**.
+`.zip`. The installer offers Arena's folder above, or Avenue's on a machine that only has Avenue;
+change it on the folder page if you use the other one. Older installers offered
+`C:\Program Files\Wheel`, which Resolume never looks at, so point those at the folder above. It
+isn't code-signed, so it trips SmartScreen once: **More info** → **Run anyway**.
 
 ---
 
