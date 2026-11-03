@@ -14,6 +14,8 @@ Avenue: the colour wheel, the retina that adds its sub-fields up, and the rainbo
 moving eye sees through it. If you've ever glanced across a DLP picture and caught a little
 rainbow flickering off the bright edges, that's the one.
 
+The [project page](https://stoatworks-labs.com/software/wheel/) has the downloads, the [user guide](https://stoatworks-labs.com/software/wheel/guide/) and the video.
+
 ![A rightward pursuit over the harness's moving card: red leads and blue trails on every bright edge](docs/hero.png)
 
 *A pursuit of 12 px a frame to the right, on a 1x RGB wheel. Red leads and blue trails on
